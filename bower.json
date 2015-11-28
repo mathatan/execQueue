@@ -1,0 +1,30 @@
+{
+  "name": "execQueue",
+  "homepage": "https://github.com/mathatan/execQueue",
+  "authors": [
+    "Markus Haverinen <mathatan@gmail.com>"
+  ],
+  "description": "Javascript asynchronous callback wrapper library",
+  "main": "",
+  "moduleType": [
+      "amd",
+      "node"
+  ],
+  "keywords": [
+    "setTimeout",
+    "setInterval",
+    "async",
+    "asynchronous",
+    "requestAnimationFrame",
+    "mobile",
+    "browser"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
