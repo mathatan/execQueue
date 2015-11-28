@@ -4,7 +4,10 @@
     define(function () {
         var native, timing;
 
-        var cbTimeout, nextCall = Infinity, cbUpdateFn, cbMessageName = 'execQueueDelayedExecution';
+        var cbTimeout, cbFrameId, waiting, 
+            nextCall = Infinity, 
+            cbUpdateFn, 
+            cbMessageName = 'execQueueDelayedExecution';
 
         if (window) {
             window.addEventListener('message', function (e) {
@@ -14,24 +17,42 @@
                 }
             }, true);
         }
-        var cbDelay = function (delay) {
-            var ts = timing.perf() + delay;
-            if (nextCall < ts) {
-                return;
-            }
-
+        var clearCallbacks = function () {
+            if (cbFrameId) {
+                native.cancelAnimationFrame(cbFrameId);
+                cbFrameId = undefined;
+            } 
+            
             if (cbTimeout) {
                 native.clearTimeout(cbTimeout);
                 cbTimeout = undefined;
             }
 
+            waiting = false;           
+        };
+        var cbDelay = function (delay) {
+            var now = timing.perf(),
+                ts = now + delay;
+
+            if (waiting ||
+                !((now - nextCall) >> 2) ||
+                (nextCall - ts < 0) && (cbFrameId || cbTimeout)) {
+                return;
+            }
+
+            clearCallbacks();
+
             nextCall = ts;
 
-            if (delay > 5) {
+            if (delay > 20) {
                 cbTimeout = native.setTimeout(cbUpdateFn, delay); 
+            } else if (delay > 2) {
+                cbFrameId = native.requestAnimationFrame(cbUpdateFn); 
             } else if (window) {
+                waiting = true;
                 window.postMessage(cbMessageName, '*');
             } else if (process) {
+                waiting = true; 
                 process.nextTick(cbUpdateFn);
             } else {
                 cbUpdateFn();
@@ -46,6 +67,7 @@
                 call : cbDelay,
                 setCallback : function (fn, context) {
                     cbUpdateFn = function () {
+                        clearCallbacks();
                         fn.call(context);
                     };
                 }
