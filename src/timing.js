@@ -21,7 +21,7 @@
 
     } 
     
-    if (!_perf && window) {
+    if (!_perf && Date) {
         _performanceStart = _dateNow();
 
         _perf = {
