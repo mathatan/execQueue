@@ -4,8 +4,8 @@
   "authors": [
     "Markus Haverinen <mathatan@gmail.com>"
   ],
-  "description": "Javascript asynchronous callback wrapper library",
-  "main": "",
+  "description": "Javascript asynchronous execution queue which can be used as a wrapper for native asynchronous calls, e.g. setTimeout, setInterval.",
+  "main": "execQueue.js",
   "moduleType": [
       "amd",
       "node"

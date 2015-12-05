@@ -1,0 +1,52 @@
+{
+  "name": "execqueue",
+  "version": "0.0.1",
+  "description": "Javascript asynchronous execution queue which can be used as a wrapper for native asynchronous calls, e.g. setTimeout, setInterval.",
+  "main": "execQueue.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mathatan/execQueue.git"
+  },
+  "keywords": [
+    "async",
+    "queue"
+  ],
+  "author": "Markus Haverinen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mathatan/execQueue/issues"
+  },
+  "homepage": "https://github.com/mathatan/execQueue#readme",
+  "devDependencies": {
+    "browserify": "^12.0.1",
+    "browserify-shim": "^3.8.11",
+    "gulp": "^3.9.0",
+    "gulp-browserify": "^0.5.1",
+    "gulp-if": "^2.0.0",
+    "gulp-jshint": "^2.0.0",
+    "gulp-rimraf": "^0.2.0",
+    "gulp-uglify": "^1.5.1",
+    "gulp-util": "^3.0.7",
+    "jasmine-core": "^2.4.1",
+    "jshint": "^2.9.1-rc1",
+    "jshint-stylish": "^2.1.0",
+    "karma": "^0.13.15",
+    "karma-browserify": "^4.4.2",
+    "karma-jasmine": "^0.3.6",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "karma-spec-reporter": "0.0.23",
+    "phantom-ownpropertynames": "^1.0.0",
+    "phantomjs": "^1.9.19",
+    "proxyquireify": "^3.0.0",
+    "run-sequence": "^1.1.5",
+    "vinyl-source-stream": "^1.1.0",
+    "yargs": "^3.31.0"
+  },
+  "browserify-shim": { }
+}

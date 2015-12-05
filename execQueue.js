@@ -4,8 +4,8 @@
     var execInstance;
 
     define(function (require) {
-        var ExecQueue = require('./lib/execQueue.js');
-        var nativeFunctions = require('./lib/nativeFunctions.js');
+        var ExecQueue = require('./src/execQueue.js');
+        var nativeFunctions = require('./src/nativeFunctions.js');
 
         return function (config) { 
             if (execInstance) {
