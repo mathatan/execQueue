@@ -9,7 +9,7 @@
 
     var _perf = window && window.performance;
 
-    if (!_perf && process) {
+    if (!_perf && process && process.hrtime) {
         _performanceStart = process.hrtime();
 
         _perf = {
