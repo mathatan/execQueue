@@ -10,7 +10,8 @@ global.config = {
             karmaConf : 'karma.conf.js',
             browserify : ['./bower_components', './src'],
             withWrapper: './withWrapper.js',
-            withoutWrapper: './withoutWrapper.js'
+            withoutWrapper: './withoutWrapper.js',
+            benchmarks : './benchmark/**/*.js'
         },
         dest: {
             build: {

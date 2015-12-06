@@ -26,6 +26,7 @@
   "devDependencies": {
     "browserify": "^12.0.1",
     "browserify-shim": "^3.8.11",
+    "glob": "^6.0.1",
     "gulp": "^3.9.0",
     "gulp-browserify": "^0.5.1",
     "gulp-if": "^2.0.0",
@@ -48,5 +49,5 @@
     "vinyl-source-stream": "^1.1.0",
     "yargs": "^3.31.0"
   },
-  "browserify-shim": { }
+  "browserify-shim": {}
 }

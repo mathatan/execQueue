@@ -202,7 +202,7 @@ describe('LinkedList', function() {
             list.addAt(itemA, 4);
             list.addAt(itemB, 2);
 
-            list.sort();
+            list.selectSort();
 
             expect(getItem(itemA.next)).toEqual('b');
             expect(getItem(list.tail.previous)).toEqual('a');
@@ -220,7 +220,7 @@ describe('LinkedList', function() {
                 list.add(items[i]);
             }
 
-            list.sort(function (a, b) {
+            list.selectSort(function (a, b) {
                 return a.data < b.data;
             });
 
@@ -233,6 +233,84 @@ describe('LinkedList', function() {
             expect(getItem(item)).toEqual(getItem(list.tail));
         });
 
+
+        it('Merge sort list without a sorting method', function () {
+            var itemA = setItem('a'),
+                itemB = setItem('b');
+
+            list.addAt(itemA, 4);
+            list.addAt(itemB, 2);
+
+            list.mergeSort();
+
+            expect(getItem(itemA.next)).toEqual('b');
+            expect(getItem(list.tail.previous)).toEqual('a');
+        });
+
+        it('Merge sort list with a sorting method', function () {
+            list = new LinkedList();
+
+            items = [];
+
+            var numbers = [5,7,4,6,8,2,3,1,9], i;
+
+            for (i = 0; i < numbers.length; i++) {
+                items[i] = setItem(numbers[i]);
+                list.add(items[i]);
+            }
+
+            list.mergeSort(function (a, b) {
+                return a.data < b.data;
+            });
+
+            var item = list.head;
+            expect(getItem(item)).toEqual(1);
+            for (i = 1; i < numbers.length; i++) {
+                item = item.next;
+                expect(getItem(item)).toEqual(i + 1);
+            }
+            expect(getItem(item)).toEqual(getItem(list.tail));
+        });        
+
+        it('Add items to list in order without a sorting method', function () {
+            var itemA = setItem('a'),
+                itemB = setItem('b');
+
+            list.addInOrder(itemA);
+            list.addInOrder(itemB);
+
+            //list.mergeSort();
+
+            expect(getItem(itemA.next)).toEqual('b');
+            expect(getItem(list.tail.previous)).toEqual('a');
+        });
+
+        it('Add items to list in order with a sorting method', function () {
+            list = new LinkedList();
+
+            items = [];
+
+            var numbers = [5,7,4,6,8,2,3,1,9], i;
+
+            var sortFn = function (a, b) {
+                return a.data < b.data;
+            };
+
+            for (i = 0; i < numbers.length; i++) {
+                items[i] = setItem(numbers[i]);
+                list.addInOrder(items[i], sortFn);
+            }
+
+            //list.mergeSort();
+
+            var item = list.head;
+            expect(getItem(item)).toEqual(1);
+            for (i = 1; i < numbers.length; i++) {
+                item = item.next;
+                expect(getItem(item)).toEqual(i + 1);
+            }
+            expect(getItem(item)).toEqual(getItem(list.tail));
+        });              
 
     });
 

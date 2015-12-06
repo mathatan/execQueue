@@ -1,7 +1,6 @@
 (function(define) {
     'use strict';
 
-    var _id = 0;
     var minIntSize = Math.pow(10, 19);
 
     var slicePos = ('' + minIntSize).length, slicePos2 = slicePos + 1;
@@ -29,12 +28,19 @@
     define(function (require) {
         var timing = require('./timing.js');
 
-        var getId = function (ts) {
-            return Math.floor(minIntSize + ((ts || timing.perf()) * 1000)) + '_' + (_id++);
+        var getId = function (ts, id) {
+            return Math.floor(minIntSize + ((ts || timing.perf()) * 1000)) + '_' + (id);
         };
 
-        var LinkedList = function() {
+        var LinkedList = function(arr) {
             this.itemCount = 0;
+            this.itemId = 0;
+            if (typeof arr === 'object' && arr.length) {
+                for (var i = 0, iLen = arr.length; i < iLen; i++) {
+                    this.add(arr[i]);
+                }
+            }
+            this.sort = this.mergeSort;
         };
 
         LinkedList.prototype = {
@@ -45,11 +51,20 @@
                 }
                 this.itemCount = i;
             },
-            add : function (node, previous) {
+            connectNode : function (node) {
                 if (!node.id) {
-                    node.id = getId(node.ts);
+                    node.id = getId(node.ts, this.itemId++);
+                    node.list = this;
                     this.itemCount++;
                 }
+            },
+            disconnectNode : function (node) {
+                node.id = undefined;
+                node.list = undefined;
+                this.itemCount--;
+            },
+            add : function (node, previous) {
+                this.connectNode(node);
 
                 if (previous && previous.next) {
                     node.next = previous.next;
@@ -72,6 +87,50 @@
 
                 return node.id;
             },
+            addAt : function (node, index) {
+                if (index > 0) {
+                    var previousNode = this.at(index - 1);
+                    return this.add(node, previousNode);
+                } else {
+                    return this.addFirst(node);
+                }
+            },
+            addFirst : function (node) {
+                var nextNode = this.head;
+                this.head = node;
+
+                this.connectNode(node);
+
+                if (nextNode) {
+                    node.next = nextNode;
+                    nextNode.previous = node;
+                } else {
+                    this.tail = node;
+                }
+
+                return node.id;
+            },
+            addInOrder : function (node, fn) {
+                this.connectNode(node);
+
+                fn = fn || defSortFn;
+                if (this.head) {
+                    if (!fn(this.head, node)) {
+                        this.addFirst(node);
+                    } else if (fn(this.tail, node)) {
+                        this.add(node);
+                    } else {
+                        var i = 1, item = this.head.next;
+                        while (item && fn(item, node)) {
+                            item = item.next;
+                            i++;
+                        }
+                        this.add(node, item && item.previous);
+                    }
+                } else {
+                    this.addFirst(node);
+                }
+            },            
             each : function (fn) {
                 for (var node = this.head; node; node = node.next) {
                     fn(node);
@@ -112,32 +171,6 @@
                 }
                 return node;
             },
-            addAt : function (node, index) {
-                if (index > 0) {
-                    var previousNode = this.at(index - 1);
-                    return this.add(node, previousNode);
-                } else {
-                    return this.addFirst(node);
-                }
-            },
-            addFirst : function (node) {
-                var nextNode = this.head;
-                this.head = node;
-
-                if (!node.id) {
-                    node.id = getId(node.ts);
-                    this.itemCount++;
-                }
-
-                if (nextNode) {
-                    node.next = nextNode;
-                    nextNode.previous = node;
-                } else {
-                    this.tail = node;
-                }
-
-                return node.id;
-            },
             dropAllBefore : function (node) {
                 this.head = node;
                 node.previous = undefined;
@@ -162,10 +195,9 @@
                 }
                 node.next = undefined;
                 node.previous = undefined;
-                node.id = undefined;
-                this.itemCount--;
+                this.disconnectNode(node);
             },
-            sort : function (fn) {
+            selectSort : function (fn) {
                 fn = fn || defSortFn;
 
                 var i = this.head,
@@ -180,12 +212,12 @@
                         }
                     }
 
-                    if (i.id !== min.id) {
+                    if (min && i.id !== min.id) {
                         this.swap(i, min);
                         i = min;
                     }
                 }
-
+                //console.log(this.listAll(this.head).join('\n'));
             },
             swap : function (aItem, bItem) {
                 var aPrevious, aNext,
@@ -197,34 +229,39 @@
                 bPrevious = bItem.previous;
                 bNext = bItem.next;
 
-                // Swap is between current and next item
-                if (aNext && aNext.id === bItem.id) {
-                    bItem.next = aItem;
-                    aItem.previous = bItem;
-                    aPrevious.next = bItem;
-                    bNext.previous = aItem;
-                    aItem.next = bNext;
+                // Swap is between siding items
+                if (aNext && aNext.id === bItem.id ||
+                    bNext && bNext.id === aItem.id
+                   ) {
 
-                    if (aItem.previous === undefined) {
-                        this.head = aItem;
-                    }
-                    if (bItem.next === undefined) {
-                        this.tail = bItem;
-                    }
-                // Swap is between current and previous item
-                } else if (aPrevious && aPrevious.id === bItem.id) {
-                    aItem.previous = bPrevious;
-                    bPrevious.next = aItem;
-                    aItem.next = bItem;
-                    bItem.previous = aItem;
-                    aNext.previous = bItem;
+                    if (bNext && bNext.id === aItem.id) {
+                        var tmp = aItem;
+                        aItem = bItem;
+                        bItem = tmp;
 
-                    if (bItem.previous === undefined) {
+                        aPrevious = aItem.previous;
+                        bNext = bItem.next;
+                    }
+
+                    if (aPrevious) {
+                        aPrevious.next = bItem;
+                        bItem.previous = aPrevious;
+                    } else {
+                        bItem.previous = undefined;
                         this.head = bItem;
                     }
-                    if (aItem.next === undefined) {
+
+                    if (bNext) {
+                        bNext.previous = aItem;
+                        aItem.next = bNext;
+                    } else {
+                        aItem.next = undefined;
                         this.tail = aItem;
                     }
+
+                    aItem.previous = bItem;
+                    bItem.next = aItem;
+
                 // Swap is something else
                 } else {
                     if (aPrevious) {
@@ -257,15 +294,109 @@
                     } else {
                         aItem.next = undefined;
                         this.tail = aItem;
-                    }                
+                        }
+                    }
+
+            },
+            listAll : function (item) {
+                var arr = [];
+                while(item) {
+                    arr.push(item.id);
+                    item = item.next;
+                }
+                return arr;
+            },
+            _merge : function (items, left, right, fn) {
+                items.head = undefined;
+                items.tail = undefined;
+
+                var handledList;
+
+                while (left.head && right.head) {
+                    if (fn(left.head, right.head)) {
+                        handledList = left;
+                    } else {
+                        handledList = right;
+                    }
+
+                    if (!items.head) {
+                        items.head = handledList.head;
+                        items.tail = handledList.head;
+                        items.head.previous = undefined;
+                    } else {
+                        items.tail.next = handledList.head;
+                        handledList.head.previous = items.tail;
+                    }
+                    items.tail = handledList.head;
+                    handledList.head = handledList.head.next;
+                    items.tail.next = undefined;
+                    if (handledList.head) {
+                        handledList.head.previous = undefined;
+                    }
                 }
 
-                // var item = this.head, str = '';
-                // while(item) {
-                //     str += item.data + ' < ';
-                //     item = item.next;
-                // }
-                // console.log('str', str);
+                if (left.head) {
+                    if (items.tail) {
+                        items.tail.next = left.head;
+                        left.head.previous = items.tail;
+                    } else {
+                        items.head = left.head;
+                    }
+                    items.tail = left.tail;
+                }
+                if (right.head) {
+                    if (items.tail) {
+                        items.tail.next = right.head;
+                        right.head.previous = items.tail;
+                    } else {
+                        items.head = right.head;
+                    }
+                    items.tail = right.tail;
+                }
+            },
+            mergeSort : function (fn, items) {
+                fn = fn || defSortFn;
+
+                items = items || this;
+                if (!items.head || items.head.id === items.tail.id) {
+                    return items;
+                }
+
+                var left = {}, right = {}, list;
+
+                var item = items.head, index = 0;
+
+                while (item) {
+                    if (index & 1) {
+                        list = left;
+                    } else {
+                        list = right;
+                    }
+
+                    if (list.tail) {
+                        list.tail.next = item;
+                        item.previous = list.tail;
+                    }
+
+                    list.tail = item;
+                    item = item.next;
+                    list.tail.next = undefined;
+
+                    if (!list.head) {
+                        list.head = list.tail;
+                        list.head.previous = undefined;
+                    }
+                    index++;
+                }
+
+                this.mergeSort(fn, left);
+                this.mergeSort(fn, right);
+
+                this._merge(items, left, right, fn);
+
+                //if (items.mergeSort) {
+                    //console.log(this.listAll(items.head).join('\n'));
+                //}
             }
         };
 

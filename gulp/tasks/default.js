@@ -7,7 +7,7 @@ module.exports = gulp.task('default', function () {
   if (release) {
     runSequence(
       'clean',
-      ['lint', 'karma'],
+      ['lint', 'benchmark', 'karma'],
       'browserify',
       'minify'
     );
@@ -15,6 +15,7 @@ module.exports = gulp.task('default', function () {
     runSequence(
       'clean',
       'lint',
+      'benchmark',
       'karma'
     );
   }

@@ -7,7 +7,7 @@
         return new Date().getTime();
     } : Date.now;
 
-    var _perf = window && window.performance;
+    var _perf = typeof window !== 'undefined' && window.performance;
 
     if (!_perf && process && process.hrtime) {
         _performanceStart = process.hrtime();
