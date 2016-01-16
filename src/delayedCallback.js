@@ -1,81 +1,112 @@
-(function(define) { 
+(function(define) {
     'use strict';
 
-    define(function () {
-        var native, timing;
+    var timing = require('timing'),
+        native = require('nativeFunctions');
 
-        var cbTimeout, cbFrameId, waiting, 
-            nextCall = Infinity, 
-            cbUpdateFn, 
-            cbMessageName = 'execQueueDelayedExecution';
+    var id = 0;
+
+    var DelayedCallback = function () {
+        this.id = 'dex_' + id++;
+
+        // Force break on the next execution cycle
+        this._b = false;
+        // Count of executions without proper break 
+        this._c = 0;
+        // Next execution
+        this._n = Infinity;
+
+        var instance = this;
 
         if (window) {
             window.addEventListener('message', function (e) {
-                if (event.source === window && e.data === cbMessageName && cbUpdateFn) {
+                if (event.source === window && e.data === instance.id && instance._cbFn) {
                     e.stopPropagation();
-                    cbUpdateFn(); 
+                    instance._cbFn();
                 }
             }, true);
         }
-        var clearCallbacks = function () {
-            if (cbFrameId) {
-                native.cancelAnimationFrame(cbFrameId);
-                cbFrameId = undefined;
-            } 
-            
-            if (cbTimeout) {
-                native.clearTimeout(cbTimeout);
-                cbTimeout = undefined;
+    };
+
+    DelayedCallback.prototype = {
+        clear : function (fn, context) {
+            if (this._fId) {
+                native.cancelAnimationFrame(this._fId);
+                this._fId = undefined;
             }
 
-            waiting = false;           
-        };
-        var cbDelay = function (delay) {
-            var now = timing.perf(),
-                ts = now + delay;
+            if (this._tId) {
+                native.clearTimeout(this._tId);
+                this._tId = undefined;
+            }
 
-            if (waiting ||
-                !((now - nextCall) >> 2) ||
-                (nextCall - ts < 0) && (cbFrameId || cbTimeout)) {
+            // Waiting for execution
+            this._w = false;
+
+            if (fn) {
+                this.set(fn, context);
+            }
+        },
+        call : function (delay, immediate) {
+            // Current execution start time
+            this._s = timing.perf();
+
+            var ts = this._s + delay;
+
+            // Skip call if, next execution is on short delay,
+            // Next scheduled execution is less than 2ms away,
+            // or if next execution is waiting for break
+            if (this._w ||
+                !((this._s - this._n) >> 2) ||
+                (this._n - ts < 0) && (this._fId || this._tId)
+               ) {
                 return;
             }
 
-            clearCallbacks();
+            this.clear();
 
-            nextCall = ts;
+            this._n = ts;
+
+            immediate = (immediate && this._c < 10);
+
+            var forceFrame = (delay < 3 && this._c > 9) || this._b;
 
             if (delay > 20) {
-                cbTimeout = native.setTimeout(cbUpdateFn, delay); 
-            } else if (delay > 2) {
-                cbFrameId = native.requestAnimationFrame(cbUpdateFn); 
-            } else if (window) {
-                waiting = true;
-                window.postMessage(cbMessageName, '*');
-            } else if (process) {
-                waiting = true; 
-                process.nextTick(cbUpdateFn);
+                this._tId = native.setTimeout(this._cbFn, delay);
+            } else if (delay > 2 || forceFrame) {
+                this._fId = native.requestAnimationFrame(this._cbFn);
+            } else if (window && !immediate) {
+                this._c = this._c + 1;
+
+                this._w = true;
+                window.postMessage(this.id, '*');
+            } else if (process && !immediate) {
+                this._c = this._c + 1;
+
+                this._w = true;
+                process.nextTick(this._cbFn);
             } else {
-                cbUpdateFn();
+                this._c = this._c + 1;
+
+                this._cbFn();
             }
-        };
+        },
+        set : function (fn, context) {
+            var instance = this;
+            this._cbFn = function () {
+                var now = timing.perf();
 
-        return function (_native, _timing) {
-            native = _native;
-            timing = _timing;
-
-            return {
-                call : cbDelay,
-                setCallback : function (fn, context) {
-                    cbUpdateFn = function () {
-                        clearCallbacks();
-                        fn.call(context);
-                    };
-                }
+                instance.clear();
+                instance._c = (now - instance._s > 8) ? (0) : (instance._c);
+                instance._b = fn.call(context);
             };
-        };
+        }
+    };
 
+    define(function () {
+        return DelayedCallback;
     });
-})(typeof define === 'function' && define.amd ? 
-    define : 
+})(typeof define === 'function' && define.amd ?
+    define :
     function (factory) { 'use strict'; module.exports = factory(require); }
   );

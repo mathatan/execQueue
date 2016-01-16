@@ -58,6 +58,13 @@ for (i = 0; i < iterations; i++) {
 }
 console.log('Sort speed on avarage ' + (time / totalIterations).toFixed(4) + ' ms per item');
 
+/*for (var item = list.head; item; item = item.next) {
+    console.log(item.id);
+}*/
+
+totalIterations = 0; 
+time = 0;
+
 console.log('Test add in order');
 for (i = 0; i < iterations; i++) {
     console.log('\t' + i + ' Iteration...');

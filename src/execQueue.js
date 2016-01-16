@@ -43,17 +43,61 @@
                     delay = parseFloat(delay.substring(1));
                 }
 
-                var id = this.list.add({
-                    loop : loop, 
-                    ts : ts + delay, 
-                    delay : delay, 
-                    fn : fn, 
-                    args : args
-                });
+                var frame;
+                if (isNaN(delay) && delay.charAt(0) === 'f') {
+                    frame = true;
+                    delay = parseFloat(delay.substring(1));
+                }
+                
+                var priority;
+                if (isNaN(delay) && delay.charAt(0) === 'p') {
+                    priority = true;
+                }
 
-                this.run(delay);
+                var id;
+
+                if (priority) {
+                    id = this.priorityList.add({
+                        ts : ts, 
+                        fn : fn, 
+                        args : args
+                    });
+                } else {
+                    id = this.list.add({
+                        loop : loop,
+                        frame : frame,
+                        ts : ts + delay, 
+                        delay : delay, 
+                        fn : fn, 
+                        args : args
+                    });
+                }
+
+                this.run(delay || 0);
 
                 return id;
+            },
+            priority : function () {
+                var i = 0, iLen = arguments.length, args;
+                if (iLen > i) {
+                    // Passing arguments as a parameter prevents function optimization so instead loop them manually.
+                    args = new Array(iLen - i);
+                    while(i < iLen) { args[i - 2] = arguments[i]; i++; }
+                }
+                args[1] = 'p' + args[1];
+
+                return this.add.apply(this, args);
+            },
+            frame : function () {
+                var i = 0, iLen = arguments.length, args;
+                if (iLen > i) {
+                    // Passing arguments as a parameter prevents function optimization so instead loop them manually.
+                    args = new Array(iLen - i);
+                    while(i < iLen) { args[i - 2] = arguments[i]; i++; }
+                }
+                args[1] = 'f' + args[1];
+
+                return this.add.apply(this, args);
             },
             loop : function () {
                 var i = 0, iLen = arguments.length, args;

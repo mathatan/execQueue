@@ -9,7 +9,7 @@
 
     var _perf = typeof window !== 'undefined' && window.performance;
 
-    if (!_perf && process && process.hrtime) {
+    if (!_perf && typeof process !== 'undefined' && process.hrtime) {
         _performanceStart = process.hrtime();
 
         _perf = {
