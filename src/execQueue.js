@@ -5,7 +5,7 @@
 
         var timing = require('./timing.js');
         var List = require('./list.js');
-        var delayedCallback = require('./delayedCallback.js');
+        var DelayedCallback = require('./delayedCallback.js');
 
         var native, wrapper;
 
@@ -14,9 +14,7 @@
             wrapper = wrapper || _wrapper;
 
             this.list = new List();
-            this._run = delayedCallback(native, timing);
-
-            this._run.setCallback(this.exec, this);
+            this._run = new DelayedCallback(this.exec, this);
         };
 
         ExecQueue.prototype = {
